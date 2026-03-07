@@ -19,7 +19,7 @@
 
 // "trace", "debug", "info", "warning", "error", "critical", "off"
 #define DEFAULT_LOG_LEVEL_NAME "info"
-#define DEFAULT_LOG_PATTERN "[%m/%d %T.%F] [%^%=81%$] [%6P/%-6t] [%@] [%!] %v"
+#define DEFAULT_LOG_PATTERN "[%m/%d %T.%F] [%^%=4l%$] [%6P/%-6t] [%@] [%!] %v"
 
 // 默认使用 c2fastlog 或 fmt::print，backtest 使用 spdlog。
 #if defined( FORCE_SPDLOG ) || defined( X2TRADER_BACKTEST ) || defined( X2TRADER_BACKTEST_MT )
