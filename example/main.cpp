@@ -1,50 +1,53 @@
-#include "Logger.h"
-
-#include <chrono>
+#include <iostream>
 #include <thread>
+#include <vector>
 
-int main()
-{
-    // 初始化日志
-    x2trader::setupLog( "info", "c2log_example.log", "c2log" );
+#include <c2_fastlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
-    // 基本日志示例
-    LOG_INFO( "Hello, c2log!" );
-    LOG_DEBUG( "This is a debug message" );
-    LOG_WARN( "This is a warning" );
-    LOG_ERROR( "This is an error" );
+int main() {
+    // Create a colored console sink
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    console_sink->set_level(spdlog::level::trace);
+    console_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [thread %t] %v");
 
-    // 格式化日志示例
-    int orderId = 12345;
-    double price = 100.5;
-    int volume = 1000;
-    LOG_INFO( "Order: id={}, price={:.2f}, volume={}", orderId, price, volume );
+    // Create C2SpdLogger with the sink
+    auto logger = std::make_shared<c2fastlog::detail::C2SpdLogger>("c2fastlog", console_sink);
+    logger->set_level(spdlog::level::trace);
 
-    // 循环日志示例
-    for( int i = 0; i < 10; ++i )
-    {
-        LOG_INFO( "Loop iteration: {}", i );
+    // Initialize c2fastlog
+    c2fastlog::initialize(logger, c2fastlog::LogLevel::trace, std::chrono::seconds(1));
+
+    // Basic logging examples
+    C2_LOG_TRACE("This is a trace message");
+    C2_LOG_DEBUG("This is a debug message");
+    C2_LOG_INFO("This is an info message");
+    C2_LOG_WARN("This is a warning message");
+    C2_LOG_ERROR("This is an error message");
+
+    // Logging with format arguments
+    C2_LOG_INFO("Integer: {}, Float: {:.2f}, String: {}", 42, 3.14159, "hello");
+
+    // Multi-threaded logging example
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 4; ++i) {
+        threads.emplace_back([i]() {
+            for (int j = 0; j < 10; ++j) {
+                C2_LOG_INFO("Thread {} - Message {}", i, j);
+            }
+        });
     }
 
-    // 多线程日志示例
-    auto worker = []( int threadNum ) {
-        for( int i = 0; i < 5; ++i )
-        {
-            LOG_INFO( "Thread {} - message {}", threadNum, i );
-            std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
-        }
-    };
+    for (auto& t : threads) {
+        t.join();
+    }
 
-    std::thread t1( worker, 1 );
-    std::thread t2( worker, 2 );
+    // Wait for logs to be flushed
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    t1.join();
-    t2.join();
+    // Release resources
+    c2fastlog::release();
 
-    LOG_INFO( "All threads completed" );
-
-    // 等待日志写入完成
-    std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-
+    std::cout << "Example completed successfully!" << std::endl;
     return 0;
 }
