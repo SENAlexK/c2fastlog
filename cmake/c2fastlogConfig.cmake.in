@@ -1,0 +1,17 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find spdlog dependency
+find_dependency(spdlog REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/c2fastlogTargets.cmake")
+
+# Add spdlog to c2fastlog's interface link libraries for installed target
+if(TARGET c2fastlog::c2fastlog AND TARGET spdlog::spdlog)
+    set_property(TARGET c2fastlog::c2fastlog APPEND PROPERTY
+        INTERFACE_LINK_LIBRARIES spdlog::spdlog
+    )
+endif()
+
+check_required_components(c2fastlog)
