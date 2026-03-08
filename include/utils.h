@@ -30,6 +30,7 @@ inline constexpr std::uint64_t micros_per_second = 1'000'000ULL;
 // Force Inline
 // ============================================================================
 
+#ifndef C2_FORCE_INLINE
 #if defined(_MSC_VER)
 #define C2_FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
@@ -37,6 +38,7 @@ inline constexpr std::uint64_t micros_per_second = 1'000'000ULL;
 #else
 #define C2_FORCE_INLINE inline
 #endif
+#endif  // C2_FORCE_INLINE
 
 // ============================================================================
 // Time Utilities

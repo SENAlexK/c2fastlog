@@ -57,8 +57,9 @@ constexpr void pack(char*) noexcept {
 template <typename Arg, typename... Args>
 void pack(char* out, Arg&& arg, Args&&... args) noexcept {
     using ArgType = std::remove_cvref_t<Arg>;
+    using DecayedArg = std::decay_t<Arg>;
     const std::size_t size = get_size(std::forward<Arg>(arg));
-    constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
+    constexpr auto type = fmt::detail::mapped_type_constant<DecayedArg, fmt::format_context>::value;
 
     if constexpr (type == fmt::detail::type::cstring_type) {
         const auto length = size - sizeof(std::size_t);
