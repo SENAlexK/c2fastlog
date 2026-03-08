@@ -41,6 +41,27 @@ template <typename T>
 inline constexpr bool is_c_string_v = is_c_string<std::remove_cvref_t<T>>::value;
 
 // ============================================================================
+// Type Traits for string_view detection
+// ============================================================================
+
+// Helper to detect string_view types (std::string_view, std::basic_string_view)
+template <typename T>
+struct is_string_view : std::false_type {};
+
+template <>
+struct is_string_view<std::string_view> : std::true_type {};
+
+template <>
+struct is_string_view<std::basic_string_view<char>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_string_view_v = is_string_view<std::remove_cvref_t<T>>::value;
+
+// Helper to detect any string-like type that needs content copy
+template <typename T>
+inline constexpr bool is_string_like_v = is_c_string_v<T> || is_string_view_v<T>;
+
+// ============================================================================
 // Size Calculation
 // ============================================================================
 
@@ -52,7 +73,7 @@ template <typename Arg>
     // Explicit check for C-string types to handle fmt library version differences
     if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type) {
         return sizeof(std::size_t) + std::strlen(arg) + 1;
-    } else if constexpr (type == fmt::detail::type::string_type) {
+    } else if constexpr (is_string_view_v<Arg> || type == fmt::detail::type::string_type) {
         return sizeof(std::size_t) + arg.size() + 1;
     } else {
         return sizeof(DecayedArg);
@@ -91,7 +112,7 @@ void pack(char* out, Arg&& arg, Args&&... args) noexcept {
         const auto length = size - sizeof(std::size_t);
         std::memcpy(out, &length, sizeof(std::size_t));
         std::memcpy(out + sizeof(std::size_t), arg, length);
-    } else if constexpr (type == fmt::detail::type::string_type) {
+    } else if constexpr (is_string_view_v<Arg> || type == fmt::detail::type::string_type) {
         const auto length = size - sizeof(std::size_t);
         std::memcpy(out, &length, sizeof(std::size_t));
         std::memcpy(out + sizeof(std::size_t), arg.data(), length - 1);
@@ -130,8 +151,8 @@ void unpack(std::array<FormatArg, SIZE>& args, const char* in) noexcept {
     std::size_t size;
     constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
 
-    // Explicit check for C-string types to handle fmt library version differences
-    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
+    // Explicit check for string-like types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || is_string_view_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
         const auto length = *reinterpret_cast<const std::size_t*>(in);
         size = length + sizeof(std::size_t);
         fmt::string_view value(in + sizeof(std::size_t), length - 1);
@@ -160,8 +181,8 @@ void destruct(const char* in) noexcept {
     std::size_t size;
     constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
 
-    // Explicit check for C-string types to handle fmt library version differences
-    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
+    // Explicit check for string-like types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || is_string_view_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
         size = *reinterpret_cast<const std::size_t*>(in) + sizeof(std::size_t);
     } else {
         const auto* value = reinterpret_cast<const ArgType*>(in);
