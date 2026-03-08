@@ -39,9 +39,13 @@ inline void fast_log(std::uint32_t& log_id,
         return;
     }
 
-    // First log call: allocate ThreadBuffer and register static info
-    if (log_id == 0) {
+    // Ensure thread buffer is allocated for this thread
+    if (!detail::t_thread_buffer) [[unlikely]] {
         preallocate();
+    }
+
+    // First log call at this location: register static info
+    if (log_id == 0) [[unlikely]] {
         detail::FastLogger::instance().register_log_info(log_id,
                                                          detail::StaticLogInfo{spdlog::source_loc{file_name, line, func_name},
                                                                                level,
@@ -89,9 +93,13 @@ inline void fast_log_discard_oldest(std::uint32_t& log_id,
         return;
     }
 
-    // First log call: allocate ThreadBuffer and register static info
-    if (log_id == 0) {
+    // Ensure thread buffer is allocated for this thread
+    if (!detail::t_thread_buffer) [[unlikely]] {
         preallocate();
+    }
+
+    // First log call at this location: register static info
+    if (log_id == 0) [[unlikely]] {
         detail::FastLogger::instance().register_log_info(log_id,
                                                          detail::StaticLogInfo{spdlog::source_loc{file_name, line, func_name},
                                                                                level,
