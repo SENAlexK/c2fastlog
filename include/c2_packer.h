@@ -18,19 +18,44 @@ namespace c2fastlog {
 namespace detail {
 
 // ============================================================================
+// Type Traits for C-string detection
+// ============================================================================
+
+// Helper to detect C-string types (char*, const char*, char[], const char[])
+template <typename T>
+struct is_c_string : std::false_type {};
+
+template <>
+struct is_c_string<char*> : std::true_type {};
+
+template <>
+struct is_c_string<const char*> : std::true_type {};
+
+template <std::size_t N>
+struct is_c_string<char[N]> : std::true_type {};
+
+template <std::size_t N>
+struct is_c_string<const char[N]> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_c_string_v = is_c_string<std::remove_cvref_t<T>>::value;
+
+// ============================================================================
 // Size Calculation
 // ============================================================================
 
 // Get the packed size of a single argument
 template <typename Arg>
 [[nodiscard]] constexpr std::size_t get_size(Arg&& arg) noexcept {
-    constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
-    if constexpr (type == fmt::detail::type::cstring_type) {
+    using DecayedArg = std::decay_t<Arg>;
+    constexpr auto type = fmt::detail::mapped_type_constant<DecayedArg, fmt::format_context>::value;
+    // Explicit check for C-string types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type) {
         return sizeof(std::size_t) + std::strlen(arg) + 1;
     } else if constexpr (type == fmt::detail::type::string_type) {
         return sizeof(std::size_t) + arg.size() + 1;
     } else {
-        return sizeof(std::decay_t<Arg>);
+        return sizeof(DecayedArg);
     }
 }
 
@@ -61,7 +86,8 @@ void pack(char* out, Arg&& arg, Args&&... args) noexcept {
     const std::size_t size = get_size(std::forward<Arg>(arg));
     constexpr auto type = fmt::detail::mapped_type_constant<DecayedArg, fmt::format_context>::value;
 
-    if constexpr (type == fmt::detail::type::cstring_type) {
+    // Explicit check for C-string types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type) {
         const auto length = size - sizeof(std::size_t);
         std::memcpy(out, &length, sizeof(std::size_t));
         std::memcpy(out + sizeof(std::size_t), arg, length);
