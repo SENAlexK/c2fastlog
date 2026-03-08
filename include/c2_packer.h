@@ -44,15 +44,12 @@ inline constexpr bool is_c_string_v = is_c_string<std::remove_cvref_t<T>>::value
 // Type Traits for string_view detection
 // ============================================================================
 
-// Helper to detect string_view types (std::string_view, std::basic_string_view)
+// Helper to detect string_view types
 template <typename T>
 struct is_string_view : std::false_type {};
 
 template <>
 struct is_string_view<std::string_view> : std::true_type {};
-
-template <>
-struct is_string_view<std::basic_string_view<char>> : std::true_type {};
 
 template <typename T>
 inline constexpr bool is_string_view_v = is_string_view<std::remove_cvref_t<T>>::value;
