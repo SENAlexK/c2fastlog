@@ -91,7 +91,7 @@
 
 ```bash
 # Clone with submodules
-git clone --recursive https://github.com/anthropics/c2fastlog.git
+git clone --recursive https://github.com/SENAlexK/c2fastlog.git
 cd c2fastlog
 
 # Build

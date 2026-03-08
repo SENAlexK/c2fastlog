@@ -91,7 +91,7 @@
 
 ```bash
 # 克隆仓库（含子模块）
-git clone --recursive https://github.com/anthropics/c2fastlog.git
+git clone --recursive https://github.com/SENAlexK/c2fastlog.git
 cd c2fastlog
 
 # 构建
