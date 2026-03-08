@@ -130,7 +130,8 @@ void unpack(std::array<FormatArg, SIZE>& args, const char* in) noexcept {
     std::size_t size;
     constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
 
-    if constexpr (type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
+    // Explicit check for C-string types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
         const auto length = *reinterpret_cast<const std::size_t*>(in);
         size = length + sizeof(std::size_t);
         fmt::string_view value(in + sizeof(std::size_t), length - 1);
@@ -159,7 +160,8 @@ void destruct(const char* in) noexcept {
     std::size_t size;
     constexpr auto type = fmt::detail::mapped_type_constant<Arg, fmt::format_context>::value;
 
-    if constexpr (type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
+    // Explicit check for C-string types to handle fmt library version differences
+    if constexpr (is_c_string_v<Arg> || type == fmt::detail::type::cstring_type || type == fmt::detail::type::string_type) {
         size = *reinterpret_cast<const std::size_t*>(in) + sizeof(std::size_t);
     } else {
         const auto* value = reinterpret_cast<const ArgType*>(in);
